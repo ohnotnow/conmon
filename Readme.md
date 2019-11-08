@@ -5,6 +5,10 @@
 This is just a very lightweight golang project that will check for containers failing more than a certain amount in a certain timeframe.
 It'll then send a message to a slack webhook.
 
+This is by no means meant to be a proper 'production monitoring solution' - it's just a quick, small sanity check.  We've sometimes had
+a situation where a container would get stuck in a rapid crash/restart loop and use up a lot of resources on a QA/test server - it's just to
+give us a little heads up.
+
 ## Usage (commandline)
 
 ```
@@ -41,7 +45,7 @@ go build -a -o conmon .
 ```
 You can also build your own docker image - have a look at the provided Dockerfile.
 
-## Note
+## Notes
 
 Conmon bases it's idea of 'a container' on the _image name_. So if you have multiple services running the same image and they fall over `conmon` treats
 them as one container.  That's what made sense in my context, so there it is...
