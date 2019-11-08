@@ -18,7 +18,7 @@ conmon [-config=/path/to/config.yaml -hostname=my-custom-hostname -proxy=http://
 ## Usage (docker)
 
 ```
-docker run -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd)/config.yaml:/config.yaml uogsoe/conmon:0.1 conmon -config /config.yaml
+docker run -v /var/run/docker.sock:/var/run/docker.sock -v $(pwd)/config.yaml:/config.yaml uogsoe/conmon:0.3.0 conmon -config /config.yaml
 ```
 
 ## Config
