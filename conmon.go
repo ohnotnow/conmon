@@ -64,15 +64,7 @@ func main() {
 			if cont {
 				entry.restartCount++
 				if ShouldAlert(c, entry) {
-					log.Printf("alert for %s\n", msg.From)
-					if c.SlackWebhook != "" {
-						err := SendSlackNotification(c, logEntry)
-						if err != nil {
-							log.Printf("Error sending slack notification : %s", err)
-						}
-					}
-					entry.lastAlerted = time.Now()
-					entry.restartCount = 0
+					entry = Alert(c, entry, logEntry)
 				}
 			} else {
 				entry = container{image: msg.From, restartCount: 0}
@@ -81,6 +73,19 @@ func main() {
 			containers[msg.From] = entry
 		}
 	}
+}
+
+func Alert(c conf, entry container, logEntry string) container {
+	log.Printf("alert for %s\n", entry.image)
+	if c.SlackWebhook != "" {
+		err := SendSlackNotification(c, logEntry)
+		if err != nil {
+			log.Printf("Error sending slack notification : %s", err)
+		}
+	}
+	entry.lastAlerted = time.Now()
+	entry.restartCount = 0
+	return entry
 }
 
 func BuildConfig() conf {
