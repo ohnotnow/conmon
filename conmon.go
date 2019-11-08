@@ -36,8 +36,8 @@ type conf struct {
 func main() {
 	hostname, err := os.Hostname()
 	confPtr := flag.String("config", "", "Path to config file")
-	hostnamePtr := flag.String("hostname", hostname, "Path to config file")
-	proxyPtr := flag.String("proxy", "", "Path to config file")
+	hostnamePtr := flag.String("hostname", hostname, "Hostname to use when pinging slack")
+	proxyPtr := flag.String("proxy", "", "HTTP proxy url")
 	slackHookPtr := flag.String("slackhook", "", "Slack webhook url")
 	slackChannelPtr := flag.String("slackchannel", "", "Slack channel")
 	flag.Parse()
@@ -85,6 +85,7 @@ func main() {
 		select {
 		case err := <-errs:
 			log.Println(err)
+			panic(err)
 		case msg := <-msgs:
 			logEntry := fmt.Sprintf("ID %s image %s status %s name %s", msg.ID, msg.From, msg.Status, msg.Actor.Attributes["name"])
 			log.Println(logEntry)

@@ -13,8 +13,10 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 
 WORKDIR /root/
-
-COPY --from=builder /app/conmon .
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
+COPY --from=builder /go/src/conmon .
 
 # Command to run the executable
-CMD ["./conmon"]
+ENTRYPOINT [ "./entrypoint.sh" ]
+CMD ["conmon"]
