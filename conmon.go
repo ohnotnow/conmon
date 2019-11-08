@@ -34,36 +34,7 @@ type conf struct {
 }
 
 func main() {
-	hostname, err := os.Hostname()
-	confPtr := flag.String("config", "", "Path to config file")
-	hostnamePtr := flag.String("hostname", hostname, "Hostname to use when pinging slack")
-	proxyPtr := flag.String("proxy", "", "HTTP proxy url")
-	slackHookPtr := flag.String("slackhook", "", "Slack webhook url")
-	slackChannelPtr := flag.String("slackchannel", "", "Slack channel")
-	flag.Parse()
-	c := conf{
-		AlertDies:      1,
-		AlertMinutes:   5,
-		AlertFrequency: 10,
-		SlackWebhook:   *slackHookPtr,
-		SlackChannel:   *slackChannelPtr,
-		Hostname:       *hostnamePtr,
-		Proxy:          *proxyPtr,
-	}
-	if *confPtr != "" {
-		if _, err := os.Stat(*confPtr); err != nil {
-			log.Fatalf("Config file not found : %s", *confPtr)
-		}
-
-		yamlFile, err := ioutil.ReadFile(*confPtr)
-		if err != nil {
-			log.Printf("yamlFile.Get err   #%v ", err)
-		}
-		err = yaml.Unmarshal(yamlFile, &c)
-		if err != nil {
-			log.Fatalf("Unmarshal: %v", err)
-		}
-	}
+	c := BuildConfig()
 
 	log.Printf("Starting... Config : %+v\n", c)
 
@@ -92,8 +63,7 @@ func main() {
 			entry, cont := containers[msg.From]
 			if cont {
 				entry.restartCount++
-				duration := time.Now().Sub(entry.lastDied).Minutes()
-				if duration < float64(c.AlertMinutes) && entry.restartCount > c.AlertDies && time.Now().Sub(entry.lastAlerted).Minutes() > float64(c.AlertFrequency) {
+				if ShouldAlert(c, entry) {
 					log.Printf("alert for %s\n", msg.From)
 					if c.SlackWebhook != "" {
 						err := SendSlackNotification(c, logEntry)
@@ -111,6 +81,51 @@ func main() {
 			containers[msg.From] = entry
 		}
 	}
+}
+
+func BuildConfig() conf {
+	hostname, _ := os.Hostname()
+	confPtr := flag.String("config", "", "Path to config file")
+	hostnamePtr := flag.String("hostname", hostname, "Hostname to use when pinging slack")
+	proxyPtr := flag.String("proxy", "", "HTTP proxy url")
+	slackHookPtr := flag.String("slackhook", "", "Slack webhook url")
+	slackChannelPtr := flag.String("slackchannel", "", "Slack channel")
+	flag.Parse()
+	c := conf{
+		AlertDies:      1,
+		AlertMinutes:   5,
+		AlertFrequency: 10,
+		SlackWebhook:   *slackHookPtr,
+		SlackChannel:   *slackChannelPtr,
+		Hostname:       *hostnamePtr,
+		Proxy:          *proxyPtr,
+	}
+	c = ParseConfigFile(*confPtr, c)
+	return c
+}
+
+func ParseConfigFile(confFile string, c conf) conf {
+	if confFile == "" {
+		return c
+	}
+	if _, err := os.Stat(confFile); err != nil {
+		log.Fatalf("Config file not found : %s", confFile)
+	}
+
+	yamlFile, err := ioutil.ReadFile(confFile)
+	if err != nil {
+		log.Printf("yamlFile.Get err   #%v ", err)
+	}
+	err = yaml.Unmarshal(yamlFile, &c)
+	if err != nil {
+		log.Fatalf("Unmarshal: %v", err)
+	}
+	return c
+}
+
+func ShouldAlert(c conf, entry container) bool {
+	duration := time.Now().Sub(entry.lastDied).Minutes()
+	return duration < float64(c.AlertMinutes) && entry.restartCount > c.AlertDies && time.Now().Sub(entry.lastAlerted).Minutes() > float64(c.AlertFrequency)
 }
 
 func SendSlackNotification(config conf, msg string) []error {
