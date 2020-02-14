@@ -1,0 +1,14 @@
+version: 3.7
+services:
+  conmon:
+    image: uogsoe/conmon:${CONMON_VERSION}
+    command: ["conmon", "-config=/conmon.yaml"]
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    configs:
+      - source: conmon_config
+        target: /conmon.yaml
+
+configs:
+  conmon_config:
+    file: conmon.yaml

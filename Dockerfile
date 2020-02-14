@@ -2,22 +2,22 @@ FROM golang:latest as builder
 
 LABEL maintainer="billybofh@gmail.com"
 
-WORKDIR /app
+WORKDIR /go/src
 
-COPY conmon.go go.mod go.sum ./
-
-RUN go mod download
-
+COPY conmon.go ./
+RUN go get -v github.com/ohnotnow/conmon/...
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o conmon .
-
 
 FROM alpine:latest
 
 RUN apk --no-cache add ca-certificates
 
 WORKDIR /root/
-
-COPY --from=builder /app/conmon .
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
+COPY --from=builder /go/src/conmon .
 
 # Command to run the executable
-CMD ["./conmon"]
+ENTRYPOINT [ "./entrypoint.sh" ]
+CMD ["conmon"]
+
