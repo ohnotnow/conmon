@@ -33,7 +33,6 @@ def send_slack_message(message):
         data), headers={'Content-Type': 'application/json'})
 
 for event in docker_client.events(decode=True, filters=filters):
-    print(event)
     restart_time = event["time"]
     image_name = event["Actor"]["Attributes"]["image"]
     if (image_name in containers):
